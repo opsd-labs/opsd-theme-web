@@ -1,0 +1,11 @@
+{
+  "short": "web",
+  "name": "经典控制台",
+  "version": "0.1.0",
+  "surfaces": [
+    "console"
+  ],
+  "console_frontend": {
+    "api_version": 1
+  }
+}
