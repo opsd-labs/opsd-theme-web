@@ -99,7 +99,7 @@ const ownedContainers = computed(() =>
     :title="titles[w.modal] || '资源操作'"
     :wide="['plan', 'compose', 'create-stack'].includes(w.modal)"
     @update:open="!$event && w.close()"
-    ><Notice v-if="w.error" tone="danger">{{ w.error }}</Notice
+    ><Notice v-if="w.error" tone="danger">{{ w.error }}</Notice>
     <form
       v-if="isForm"
       id="operation-form"
@@ -133,15 +133,15 @@ const ownedContainers = computed(() =>
               { value: 'docker', label: 'Docker Agent（Docker 与只读采集）' },
             ]" /></Field
         ><Notice>一次性注册令牌有效期十分钟，只在本次响应中显示明文。</Notice
-        ><template v-if="w.token && installCommands">
+        ><template v-if="w.token && installCommands"
           ><Notice>令牌已绑定节点。先准备 CA 文件和令牌文件，再执行对应安装命令。</Notice
           ><Field label="宿主机安装命令">
             <pre class="mono command-preview">{{ installCommands.host }}</pre>
-            <Button type="button" @click="copyCommand(installCommands.host)">复制命令</Button></Field>
+            <Button type="button" @click="copyCommand(installCommands.host)">复制命令</Button></Field
           ><Field label="Docker Agent 命令">
             <Notice v-if="!installCommands.pinned" tone="warning">当前镜像未固定 digest，仅适合实验；生产部署请在 OPSD_AGENT_IMAGE 中配置 @sha256 摘要。</Notice>
             <pre class="mono command-preview">{{ installCommands.docker }}</pre>
-            <Button type="button" @click="copyCommand(installCommands.docker)">复制命令</Button></Field>
+            <Button type="button" @click="copyCommand(installCommands.docker)">复制命令</Button></Field
         ></template
         ><ResourceDetails :omit="['action','digest','key']"
           :labels="resourceLabels"
