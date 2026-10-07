@@ -104,9 +104,6 @@ test("真实接口形状的失败保留、结构化计划与跨节点定位", as
 test("防火墙首屏密度、分页、筛选及长文本", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(firewall);
-  await expect(
-    page.getByText("演示 · 不执行操作", { exact: true }),
-  ).toBeVisible();
   const table = page.getByRole("region", { name: "防火墙规则", exact: true });
   await expect(table.locator("tr.data-row")).toHaveCount(50);
   const metrics = await table.locator("tr.data-row").evaluateAll((rows) => {

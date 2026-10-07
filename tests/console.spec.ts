@@ -396,23 +396,31 @@ test("数据库页只读：未知不等于正常，也不提供任何写入口",
   }
 });
 
-test("数据库页在演示模式下不发起任何变更请求", async ({ page }) => {
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET") changes.push(`${request.method()} ${request.url()}`);
+test("数据库巡检携带 CSRF 与幂等键，失败不会显示已提交", async ({ page }) => {
+  const changes: { node: string; csrf: string | undefined; key: string }[] = [];
+  await page.route('**/api/v1/nodes/*/db-inspect', async route => {
+    const request = route.request();
+    expect(request.method()).toBe('POST');
+    changes.push({ node: new URL(request.url()).pathname.split('/').at(-2)!, csrf: request.headers()['x-csrf-token'], key: request.postDataJSON().idempotency_key });
+    await route.fulfill({ status: 202, json: { task_id: 'fixture-task-001' } });
   });
   await page.goto(base + "/?page=database");
+  await expect(page.locator('.storage-node')).toHaveCount(5);
   await page.getByRole("button", { name: "全部节点巡检" }).click();
-  await page.getByRole("button", { name: "巡检" }).first().click();
-  await expect(
-    page.locator(".ui-notice", { hasText: "演示模式：未提交巡检任务" }),
-  ).toBeVisible();
-  expect(changes).toEqual([]);
+  await expect(page.locator('.ui-notice', { hasText: '已提交只读巡检任务' })).toBeVisible();
+  await expect.poll(() => changes.length).toBe(4);
+  expect(changes.every(change => change.csrf === 'test-csrf' && /^[0-9a-f-]{36}$/.test(change.key))).toBe(true);
+  expect(new Set(changes.map(change => change.key)).size).toBe(4);
+  await page.route('**/api/v1/nodes/*/db-inspect', route => route.fulfill({ status: 400, json: { error: '未配置只读巡检账号' } }));
+  await page.getByRole("button", { name: "巡检", exact: true }).first().click();
+  await expect(page.locator('.ui-notice', { hasText: '未配置只读巡检账号' })).toBeVisible();
+  await expect(page.locator('.ui-notice', { hasText: '已提交只读巡检任务' })).toHaveCount(0);
 });
 
 test("数据库页在首屏就能看到全部节点的结论", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(base + "/?page=database");
+  await expect(page.locator('.storage-node')).toHaveCount(5);
   const metrics = await page.locator(".storage-node").evaluateAll((nodes) => {
     const first = nodes[0].getBoundingClientRect();
     const visible = nodes.filter(

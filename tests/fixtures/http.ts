@@ -17,9 +17,21 @@ export async function installFixtures(page: Page) {
     else if (path.endsWith('/storage/readiness')) body = fixtureReadiness();
     else if (path.endsWith('/storage/clusters')) body = { clusters: [], limits: { image_prefix: 'pgsty/silo', filesystem: 'xfs', min_nodes: 4 } };
     else if (path.endsWith('/storage/plans')) { await route.fulfill({ status: 400, json: { error: '请先保存集群定义' } }); return; }
-    else if (/\/nodes\/[^/]+\/metrics$/.test(path)) body = { node_id: path.split('/').at(-2), points: [], tier: 'raw', step: 10, truncated: false };
+    else if (/\/nodes\/[^/]+\/metrics$/.test(path)) {
+      const url = new URL(route.request().url());
+      const to = Number(url.searchParams.get('to'));
+      const from = Number(url.searchParams.get('from'));
+      const step = (to - from) / 120;
+      body = { node_id: path.split('/').at(-2), points: Array.from({ length: 120 }, (_, i) => ({
+        at: Math.floor(from + i * step), cpu_usage: 20 + 15 * Math.sin(i / 7),
+        memory_used: 3.2e9 + 4e8 * Math.sin(i / 11), memory_total: 8e9,
+        load1: .4 + .3 * Math.sin(i / 5), net_rx_bytes_per_second: 4e5 + 3e5 * Math.abs(Math.sin(i / 9)),
+        net_tx_bytes_per_second: 2e5 + 1.5e5 * Math.abs(Math.sin(i / 13)),
+        disk_read_bytes_per_second: 1e5 * Math.abs(Math.sin(i / 17)), disk_write_bytes_per_second: 6e4 * Math.abs(Math.sin(i / 21)),
+      })), tier: 'raw', step, truncated: false };
+    }
     else if (path.endsWith('/events')) {
-      await route.fulfill({ contentType: 'text/event-stream', body: ': 就绪\n\n' });
+      // 保持连接请求挂起，避免一次性响应结束触发断线提示而改变页面布局。
       return;
     } else if (path.endsWith('/themes/active')) body = { console: { short: 'default', settings: {} }, share: { short: 'default', settings: {} }, console_frontend: { short: 'web' } };
     else {
