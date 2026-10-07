@@ -51,7 +51,7 @@ export async function installFixtures(page: Page) {
       ] })).toString('base64'));
       socket.close();
     } else {
-      socket.send(Buffer.from('接口夹具：终端连接已建立\r\n').toString('base64'));
+      socket.onMessage(() => socket.send(Buffer.from('接口夹具：终端连接已建立\r\n').toString('base64')));
     }
   });
 }

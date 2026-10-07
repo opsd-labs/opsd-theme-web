@@ -194,6 +194,7 @@ test("节点页提供堡垒机终端与结构化文件管理", async ({ page }) 
   // 宿主机终端：通过流通道接口夹具建立连接
   const shell = workbench.locator(".host-shell");
   await expect(shell.locator(".terminal-host .xterm")).toHaveCount(1);
+  await shell.locator('.xterm-helper-textarea').press('Enter');
   await expect(shell.locator(".terminal-host")).toContainText("接口夹具：终端连接已建立");
   // 只允许白名单内的 shell，界面必须说明这一点
   await expect(
