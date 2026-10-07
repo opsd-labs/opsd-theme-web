@@ -304,7 +304,7 @@ test("存储集群定义与破坏性计划必须显式确认", async ({ page }) 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(base + "/?page=storage");
 
-  // 集群定义区可用，但演示模式不会真的生成计划
+  // 集群定义区可用，未保存定义时服务端拒绝生成计划
   await expect(page.getByLabel("集群名称")).toHaveValue("silo-prod");
   await expect(page.getByLabel("镜像标签")).toBeVisible();
   // 镜像仓库固定，且明示不接受 latest
@@ -314,11 +314,10 @@ test("存储集群定义与破坏性计划必须显式确认", async ({ page }) 
   await expect(picker.getByText("C001 · 美国", { exact: false })).toBeVisible();
   await expect(picker.getByText("C052 · 日本", { exact: false })).toHaveCount(0);
 
-  // 演示模式不得生成计划，也不得下发任务
+  // 接口失败不能展示已生成计划或任务成功
   await page.getByRole("button", { name: "生成部署计划", exact: true }).click();
   await expect(page.locator(".storage-plan")).toHaveCount(0);
-  await expect(page.getByText("未生成计划", { exact: false })).toBeVisible();
-  await expect(page.getByText("不会下发任何任务", { exact: false })).toBeVisible();
+  await expect(page.getByText("请先保存集群定义", { exact: true })).toBeVisible();
 
   // 破坏性操作的边界说明必须常驻
   await expect(

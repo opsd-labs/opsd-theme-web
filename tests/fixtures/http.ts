@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { fixtureNodes, fixturePeers, fixtureTasks, fixtureMetrics } from './nodes';
+import { fixtureOverview, fixtureReadiness } from './reports.mjs';
 
 /** 浏览器测试只替换网络响应，运行时仍走真实登录和工作台入口。 */
 export async function installFixtures(page: Page) {
@@ -12,6 +13,11 @@ export async function installFixtures(page: Page) {
     else if (path.endsWith('/tasks')) body = fixtureTasks;
     else if (path.endsWith('/peer-addresses')) body = fixturePeers;
     else if (path.endsWith('/metrics/overview')) body = { nodes: Object.values(fixtureMetrics()) };
+    else if (path.endsWith('/database/overview')) body = fixtureOverview();
+    else if (path.endsWith('/storage/readiness')) body = fixtureReadiness();
+    else if (path.endsWith('/storage/clusters')) body = { clusters: [], limits: { image_prefix: 'pgsty/silo', filesystem: 'xfs', min_nodes: 4 } };
+    else if (path.endsWith('/storage/plans')) { await route.fulfill({ status: 400, json: { error: '请先保存集群定义' } }); return; }
+    else if (/\/nodes\/[^/]+\/metrics$/.test(path)) body = { node_id: path.split('/').at(-2), points: [], tier: 'raw', step: 10, truncated: false };
     else if (path.endsWith('/events')) {
       await route.fulfill({ contentType: 'text/event-stream', body: ': 就绪\n\n' });
       return;
